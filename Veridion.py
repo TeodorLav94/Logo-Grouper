@@ -10,18 +10,25 @@ def load_domains(parquet_file):
     df['domain'] = df['domain'].astype(str).str.strip()
     return df['domain'].dropna().unique().tolist()
 
-# Folosesc Clearbit
+# Folosesc Clearbit, apoi DuckDuckGo ca fallback
 def get_logo(domain):
-    url = f"https://logo.clearbit.com/{domain}"
+    urls = [
+        f"https://logo.clearbit.com/{domain}",
+        f"https://icons.duckduckgo.com/ip3/{domain}.ico",
+        f"https://{domain}/favicon.ico"
+    ]
     headers = {"User-Agent": "Mozilla/5.0"}
-    try:
-        response = requests.get(url, headers=headers, timeout=5)
-        if response.status_code == 200:
-            return Image.open(BytesIO(response.content))
-    except Exception:
-        pass
+    
+    for url in urls:
+        try:
+            response = requests.get(url, headers=headers, timeout=5)
+            if response.status_code == 200:
+                return Image.open(BytesIO(response.content))
+        except Exception:
+            continue
     return None
 
+# Main
 def main():
     parquet_file = "logos.snappy.parquet"
     domains = load_domains(parquet_file)
