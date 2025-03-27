@@ -1,19 +1,19 @@
-import pandas as pd                 # citire fisier .parquet si manipulare tabelara
-from tqdm import tqdm               # afisare progres in bucle lungi
-import networkx as nx               # lucrul cu grafuri pentru grupare pe baza similaritatii
-from concurrent.futures import ThreadPoolExecutor, as_completed  # paralelizare cu thread-uri
-import warnings                     # ignorare avertismente PIL
-from Logo_Utils import get_logo, hash_logo, hamming_distance  # functii custom pentru extragere si procesare logo-uri
+import pandas as pd                 # read .parquet file and manipulate tabular data
+from tqdm import tqdm               # show progress bar for long loops
+import networkx as nx               # work with graphs for grouping by similarity
+from concurrent.futures import ThreadPoolExecutor, as_completed  # multithreading
+import warnings                     # suppress PIL warnings
+from Logo_Utils import get_logo, hash_logo, hamming_distance  # custom functions for logo extraction and processing
 
 warnings.filterwarnings("ignore", category=UserWarning, module="PIL")
 
-# Incarc domeniile din fisierul parquet
+# Load domains from a .parquet file
 def load_domains(parquet_file):
     df = pd.read_parquet(parquet_file)
     df['domain'] = df['domain'].astype(str).str.strip()
     return df['domain'].dropna().unique().tolist()
 
-# Construiesc graf de similaritate
+# Build similarity graph based on perceptual hash distance
 def build_similarity_graph(domain_hashes, threshold):
     G = nx.Graph()
     domains = list(domain_hashes.keys())
@@ -27,7 +27,7 @@ def build_similarity_graph(domain_hashes, threshold):
         G.add_node(domain)
     return G
 
-# Procesez un singur domain: iau logo-ul, fac hash
+# Process a single domain: fetch logo and compute hash
 def process_domain(domain, preview=False):
     logo = get_logo(domain)
     if logo:
@@ -40,7 +40,7 @@ def process_domain(domain, preview=False):
             return domain, None
     return domain, None
 
-# Main
+# Main function
 def main():
     parquet_file = "logos.snappy.parquet"
     domains = load_domains(parquet_file)
@@ -48,11 +48,11 @@ def main():
     domain_hashes = {}
     failed = []
 
-    # modific preview_limit pentru a dechide primele n logo-uri, pentru verificare
+    # Set preview_limit to display the first n logos for visual check
     preview_limit = 0
 
-    # threshold controleaza cat de similare trebuie sa fie doua logo-uri (distanta Hamming)
-    # valori mai mici = grupuri mai stricte, valori mai mari = grupuri mai permisive 
+    # threshold controls how similar two logos must be (based on Hamming distance)
+    # lower values = stricter groups, higher values = more permissive
     threshold = 10
 
     print("Downloading and hashing logos...")
@@ -72,15 +72,15 @@ def main():
     print(f"\nSuccessfully hashed: {len(domain_hashes)} / {len(domains)}")
     print(f"Failed domains: {len(failed)}")
 
-    # Grupez logo-urile folosind un graf de similaritate
+    # Group logos using a similarity graph
     G = build_similarity_graph(domain_hashes, threshold)
     groups = list(nx.connected_components(G))
 
-    # Salvez rezultatele
+    # Save output
     output = [list(group) for group in groups]
     pd.DataFrame({'group_id': range(len(output)), 'domains': output}).to_json("logo_groups.json", orient="records", indent=2)
 
-    print(f"\n\u2705 Grouping complete! {len(groups)} groups saved to logo_groups.json")
+    print(f"\n✅ Grouping complete! {len(groups)} groups saved to logo_groups.json")
 
 if __name__ == "__main__":
     main()
