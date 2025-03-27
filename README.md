@@ -8,23 +8,43 @@ Designed to work at scale, Logo-Grouper extracts logos using multiple fallback m
 
 ## 🔑 How It Works
 
-### Logo Retrieval
+Logo-Grouper processes each domain in three key steps: logo retrieval, perceptual hashing, and similarity-based grouping using a graph structure.
 
-For each domain, the tool attempts to extract the most relevant logo using a layered fallback approach:
+### 1. Logo Retrieval (Multi-Level Fallback)
 
-1. Parses the homepage's HTML to extract `<link rel="icon">`
-2. Queries Clearbit’s logo API
-3. Fetches icons from DuckDuckGo
-4. Falls back to the default `/favicon.ico` location
+To maximize accuracy and coverage, logos are extracted using multiple prioritized sources:
 
-Each downloaded image is validated (minimum size and visual complexity). If no meaningful logo is found, the first available fallback is used.
+- **HTML `<link rel="icon">`** – Parses the homepage to find explicitly declared favicons.
+- **Clearbit API** – Attempts to fetch a high-quality logo for the domain.
+- **DuckDuckGo Icon API** – Grabs lightweight, cached icons.
+- **Fallback to `/favicon.ico`** – Standard browser location.
 
-### Logo Hashing and Grouping
+Each image is validated:
 
-- Each logo is converted to a perceptual hash using `imagehash.phash()`
-- All pairs of hashes are compared using Hamming distance  
-- If the distance ≤ **threshold** (default: `10`), the logos are considered visually similar
-- Similar logos are grouped using connected components in a graph
+- Minimum size of 32x32 pixels  
+- Basic visual complexity (avoiding blank, transparent, or uniform icons)  
+- Converted to RGB/RGBA for consistent processing  
+
+If none of the sources provide a high-quality logo, the system falls back to the first available image.
+
+### 2. Perceptual Hashing
+
+Each valid image is converted into a 64-bit perceptual hash using `imagehash.phash()`. This type of hash:
+
+- Encodes the visual structure of an image  
+- Is robust to scaling, compression, and minor color changes  
+- Allows fast, meaningful comparisons using Hamming distance  
+
+### 3. Similarity-Based Grouping
+
+- The system computes Hamming distance between all logo hashes.  
+- Two domains are considered similar if their hash distance ≤ **threshold** (default: `10`).  
+- These similarities are represented in an undirected graph, where:  
+  - **Nodes** = domains  
+  - **Edges** = visual similarity  
+- The **connected components** of the graph form final logo groups.
+
+The result is a list of clusters, each containing domains that share visually similar branding.
 
 ---
 
