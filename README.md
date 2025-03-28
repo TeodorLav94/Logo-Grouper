@@ -71,6 +71,7 @@ The result is a list of clusters, each containing domains that share visually si
     "pepsico.ru"
   ]
 }
+```
 
 ---
 
