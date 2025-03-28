@@ -62,6 +62,16 @@ The result is a list of clusters, each containing domains that share visually si
 
 - logo_groups.json: List of grouped domains with similar logos
 
+```json
+{
+  "group_id":282,
+  "domains":[
+    "pepsico.ua",
+    "pepsico.fr",
+    "pepsico.ru"
+  ]
+}
+
 ---
 
 ## 🔧 Requirements
