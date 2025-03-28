@@ -6,6 +6,16 @@ Designed to work at scale, Logo-Grouper extracts logos using multiple fallback m
 
 ---
 
+## 💡 Solution Explanation
+
+I wanted a fast, explainable way to group logos based on how they look, not metadata. Perceptual hashing stood out because it captures visual structure and is resilient to small changes.
+
+I did not use k-means or DBSCAN. Instead, I used a graph: if two logos are visually close (low Hamming distance), I connect them. Then I extract the connected components as groups.
+
+This gave me a simple, scalable pipeline without needing any machine learning.
+
+---
+
 ## 🔑 How It Works
 
 Logo-Grouper processes each domain in three key steps: logo retrieval, perceptual hashing, and similarity-based grouping using a graph structure.
